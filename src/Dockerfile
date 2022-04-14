@@ -6,8 +6,8 @@ ENV GO111MODOLE=on
 
 RUN go get github.com/caspare/reflex
 
-COPY go.mod .
-COPY go.sum .
+COPY ../go.mod .
+COPY ../go.sum .
 
 RUN go mod download
 
