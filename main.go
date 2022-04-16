@@ -1,58 +1,43 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/nasanasaQuQ/goProject/src/app/models"
+	"github.com/nasanasaQuQ/goProject/src/pkg/base"
+	"github.com/nasanasaQuQ/goProject/src/pkg/global"
+	"github.com/nasanasaQuQ/goProject/src/pkg/logging"
+	"github.com/nasanasaQuQ/goProject/src/routers"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
 func init() {
-
+	global.VP = base.Viper()
+	global.LOG = base.SetupLogger()
+	models.Setup()
+	logging.Setup()
 }
 
 func main() {
-	log.Println("server is Starting...")
 
-	router := gin.Default()
+	gin.SetMode(global.CONFIG.Server.RunMode)
 
-	router.GET("/api/login", func(context *gin.Context) {
-		context.JSON(http.StatusOK, gin.H{
-			"Hello": "world",
-		})
-	})
+	routersInit := routers.InitRouter()
+	endPoint := fmt.Sprintf(":%d", global.CONFIG.Server.HttpPort)
+	maxHeaderBytes := 1 << 20
 
 	server := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
+		Addr:           endPoint,
+		Handler:        routersInit,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: maxHeaderBytes,
 	}
 
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to initialize server: %v\n", err)
-		}
-	}()
+	global.LOG.Info("[info] start http server listening %s", endPoint)
+	log.Printf("[info] start http server listening %s", endPoint)
 
-	log.Println("server is started, Listen on port 8080")
-
-	quit := make(chan os.Signal)
-
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
-	<-quit
-
-	// 通过信号阻塞停止代码 直到手动停止
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Shutdown server
-	log.Println("Shutting down the server")
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shundown: %v\n", err)
-	}
-
+	server.ListenAndServe()
 }

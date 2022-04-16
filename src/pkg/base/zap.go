@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func SetupLogger(logger *zap.SugaredLogger) *zap.SugaredLogger {
+func SetupLogger() *zap.SugaredLogger {
 	filepath := global.CONFIG.Zap.LogFilePath
 	infofilename := global.CONFIG.Zap.LogInfoFileName
 	warnfilename := global.CONFIG.Zap.LogWarnFileName
